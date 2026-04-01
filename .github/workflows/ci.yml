@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ main, master, develop ]
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -34,11 +39,11 @@ jobs:
       - name: Run Tests
         run: mvn clean test -Dbase.url=http://localhost:8080
 
-      - name: Upload Test Results
+      - name: Upload Test Results (Raw)
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results
+          name: raw-test-results
           path: |
             target/surefire-reports/
             target/allure-results/
@@ -47,20 +52,47 @@ jobs:
       - name: Generate Allure Report
         uses: simple-elf/allure-report-action@master
         if: always()
+        continue-on-error: true
         with:
           allure_results: target/allure-results
           allure_report: allure-report
+          gh_pages: gh-pages
 
-      - name: Upload Allure Report
+      - name: Upload Allure HTML Report (Artifact)
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: allure-report
+          name: allure-html-report
           path: allure-report/
           retention-days: 7
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        with:
+          path: 'allure-report'
 
       - name: Stop and Remove Container
         if: always()
         run: |
           docker stop api-container || true
           docker rm api-container || true
+
+  deploy-pages:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
