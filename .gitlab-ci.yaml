@@ -1,0 +1,56 @@
+stages:
+  - build
+  - test
+  - report
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+
+build_api:
+  stage: build
+  image: maven:3.8-openjdk-17
+  script:
+    - mvn clean package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 week
+
+test_api:
+  stage: test
+  image: maven:3.8-openjdk-17
+  services:
+    - docker:dind
+  before_script:
+    - docker build -t fintech-api .
+    - docker run -d --name api-container -p 8080:8080 fintech-api
+    - sleep 15  # Ждем пока API полностью запустится
+  script:
+    - mvn clean test -Dbase.url=http://api-container:8080
+  after_script:
+    - docker stop api-container || true
+    - docker rm api-container || true
+  artifacts:
+    when: always
+    paths:
+      - target/allure-results/
+      - target/surefire-reports/
+    reports:
+      junit: target/surefire-reports/*.xml
+    expire_in: 1 week
+
+allure_report:
+  stage: report
+  image: node:18-alpine
+  script:
+    - npm install -g allure-commandline
+    - allure generate target/allure-results -o allure-report --clean
+  artifacts:
+    paths:
+      - allure-report/
+    expire_in: 1 week
+  only:
+    - main
+    - develop
