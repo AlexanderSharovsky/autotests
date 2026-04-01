@@ -1,8 +1,10 @@
 # 💱 Fintech Exchange Rate API & QA Automation Framework
 
-> **🚀 Live Demo & CI/CD:** This project features a fully automated **GitHub Actions** pipeline. Every push triggers build, Docker containerization, API testing, and Allure report generation. Check the **Actions** tab to see the latest run!
+> ** Live Demo:** Check out the latest **Allure Test Report** generated automatically by CI/CD pipeline:  
+> 👉 **[View Live Allure Report](https://alexandersharovsky.github.io/autotests/)**  
 
-A robust demonstration project showcasing a **Spring Boot REST API** for currency conversion paired with a professional **Java-based Test Automation Framework**. Designed to reflect real-world FinTech testing scenarios, including API validation, error handling, and seamless CI/CD integration.
+A robust demonstration project showcasing a **Spring Boot REST API** for currency conversion paired with **Java-based Test Automation Framework**. Designed to reflect FinTech testing scenarios, including API validation, error handling, and seamless CI/CD integration with live reporting.
+
 
 ---
 
